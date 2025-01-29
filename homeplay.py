@@ -2,12 +2,14 @@ from flask import Flask, request, send_file, jsonify
 import pyautogui
 import os
 import socket
+import sys
 import asyncio
 from winrt.windows.media.control import GlobalSystemMediaTransportControlsSessionManager as MediaManager
 from winrt.windows.media.control import GlobalSystemMediaTransportControlsSessionPlaybackStatus as PlaybackStatus
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from ctypes import cast, POINTER
 
+PORT:int = 9187
 HTML:str = "index.html"
 
 app = Flask(__name__)
@@ -69,11 +71,14 @@ async def get_current_song():
         return "No media is currently playing."
         
 async def get_playback_status():
-    manager = await MediaManager.request_async()
-    session = manager.get_current_session()
-    if session:
-        return session.get_playback_info().playback_status
-    return None
+    try:
+        manager = await MediaManager.request_async()
+        session = manager.get_current_session()
+        if session:
+            return session.get_playback_info().playback_status
+        return None
+    except:
+        return None
     
 def get_audio_info():
     try:
@@ -84,5 +89,8 @@ def get_audio_info():
     except:
         return {"volume": 50, "isMute": False}
 
-    
-app.run(socket.gethostbyname(socket.gethostname()), 9187)
+if (len(sys.argv) > 1):
+    port:int = int(sys.argv[1])
+else:
+    port:int = PORT
+app.run(socket.gethostbyname(socket.gethostname()), port)
