@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #1e293b, #64748b);
+            color: #fff;
+        }
+        .player-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        button {
+            background: #64748b;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 16px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background: #475569;
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .volume-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            align-items: center;
+        }
+        .volume-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .volume-bar {
+            width: 100px;
+            height: 8px;
+            background: #475569;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .volume-fill {
+            height: 100%;
+            width: 50%; /* Default volume */
+            background: #38bdf8;
+            transition: width 0.3s ease;
+        }
+
+        .volume-text {
+            font-size: 14px;
+            margin-top: 5px;
+            text-align: center;
+        }
+        .track-info {
+            margin-top: 15px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="player-controls">
+        <h1>Music Player</h1>
+        <div class="track-info" id="track-info">Loading...</div>
+        <div class="controls">
+            <button id="prev">⏮️ Prev</button>
+            <button id="play-pause">▶️ Play</button>
+            <button id="next">⏭️ Next</button>
+        </div>
+        <div class="volume-controls">
+            <button id="mute">🔇 Mute</button>
+            <button id="volume-down">🔉 Volume Down</button>
+            <button id="volume-up">🔊 Volume Up</button>
+        </div>
+        <div class="volume-indicator">
+            <div class="volume-bar">
+                <div class="volume-fill" id="volume-fill"></div>
+            </div>
+            <div class="volume-text" id="volume-text">50%</div>
+        </div>
+    </div>
+    
+    <script>
+        function send(action){
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({"action": action})
+            }).then(res => res.json())
+              .then(res => {
+                  if (res["success"] == false){
+                      alert(res["message"]);
+                  }
+              });
+        }
+
+        function fetchTrackInfo() {
+            fetch('/current-track', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(res => res.json())
+              .then(data => {
+                  const trackInfo = document.getElementById('track-info');
+                  const playPauseButton = document.getElementById('play-pause');
+                  const volumeFill = document.getElementById('volume-fill');
+                  const volumeText = document.getElementById('volume-text');
+
+                  if (data.success) {
+                      trackInfo.textContent = `Now Playing: ${data.track.title}`;
+                      isPlaying = data.isPlaying;
+                      isMute = data.audio.isMuted;
+                      
+                      let volumeLevel = data.audio.volume; // Assuming volume is from 0 to 100
+                      volumeFill.style.width = `${volumeLevel}%`;
+                      volumeText.textContent = `${Math.round(volumeLevel)}%`;
+
+                      updateContent();
+                  } else {
+                      trackInfo.textContent = 'Error loading track info';
+                  }
+              });
+        }
+        
+        function updateContent(){
+            document.getElementById('play-pause').textContent = isPlaying ? '⏸️ Pause' : '▶️ Play';
+            document.getElementById('mute').textContent = !isMute ? '🔇 Mute' : '🔊 Un-Mute';
+        }
+
+        const playPauseButton = document.getElementById('play-pause');
+        let isPlaying = false;
+        let isMute = false;
+
+        playPauseButton.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            updateContent();
+            send('track-play');
+        });
+
+        document.getElementById('prev').addEventListener('click', () => {
+            send('track-prev');
+        });
+
+        document.getElementById('next').addEventListener('click', () => {
+            send('track-next');
+        });
+
+        document.getElementById('mute').addEventListener('click', () => {
+            isMute = !isMute;
+            updateContent();
+            send('vol-mute');
+        });
+
+        document.getElementById('volume-up').addEventListener('click', () => {
+            send('vol-high');
+        });
+
+        document.getElementById('volume-down').addEventListener('click', () => {
+            send('vol-low');
+        });
+
+        fetchTrackInfo();
+        updateContent();
+        
+        setInterval(fetchTrackInfo, 2000);
+        setInterval(updateContent, 500);
+    </script>
+</body>
+</html>
