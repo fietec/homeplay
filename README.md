@@ -3,7 +3,9 @@
 A simple `Flask` server for sharing media control over the home network.
 
 ## How to use
-Simply run:
+I have no idea how python's fancy build systems work (maybe i am also refusing to learn them). I created a `requirements.txt`, please just figure out how get everything to work :/.
+
+Anyway, after that simply run:
 ```terminal
 python3 homeplay.py [<PORT>]
 ```
