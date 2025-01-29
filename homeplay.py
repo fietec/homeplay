@@ -27,49 +27,62 @@ def index():
         if json != None:
             if "action" not in json:
                 return error("No action provided!")
-            match json["action"]:
-                case "vol-low":
-                    for _ in range(3):
-                        pyautogui.press("volumedown")
-                case "vol-high":
-                    for _ in range(3):
-                        pyautogui.press("volumeup")
-                case "vol-mute":
-                    pyautogui.press("volumemute")
-                case "track-next":
-                    pyautogui.press("nexttrack")
-                case "track-prev":
-                    pyautogui.press("prevtrack")
-                case "track-play":
-                    pyautogui.press("playpause")
-                case _:
-                    return error(f"Unsupported action: '{json['action']}'")
-            return SUCCESS
+            try:
+                match json["action"]:
+                    case "vol-low":
+                        for _ in range(3):
+                            pyautogui.press("volumedown")
+                    case "vol-high":
+                        for _ in range(3):
+                            pyautogui.press("volumeup")
+                    case "vol-mute":
+                        pyautogui.press("volumemute")
+                    case "track-next":
+                        pyautogui.press("nexttrack")
+                    case "track-prev":
+                        pyautogui.press("prevtrack")
+                    case "track-play":
+                        pyautogui.press("playpause")
+                    case _:
+                        return error(f"Unsupported action: '{json['action']}'")
+                return SUCCESS
+            except:
+                return error("Internal error")
         return error("Bad request!")
     return error(f"Unsupported request method: '{request.method}'")
 
 @app.route('/current-track', methods=['GET'])
 def get_current_track():
-    return jsonify({
-        "success": True,
-        "track": {
-            "title": asyncio.run(get_current_song())
-        },
-        "isPlaying": asyncio.run(get_playback_status()) == PlaybackStatus.PLAYING,
-        "audio": get_audio_info()
-    })
+    try:
+        return jsonify({
+            "success": True,
+            "track": {
+                "title": asyncio.run(get_current_song())
+            },
+            "isPlaying": asyncio.run(get_playback_status()) == PlaybackStatus.PLAYING,
+            "audio": get_audio_info()
+        })
+    except:
+        return "{}"
+        
+@app.route("/shutdown")
+def shutdown():
+    return SUCCESS
     
 async def get_current_song():
-    manager = await MediaManager.request_async()    
-    session = manager.get_current_session()
-    if session:
-        media_properties = await session.try_get_media_properties_async()
-        
-        title = media_properties.title
-        artist = media_properties.artist
-        return f"'{title}' by {artist}"
-    else:
-        return "No media is currently playing."
+    try:
+        manager = await MediaManager.request_async()    
+        session = manager.get_current_session()
+        if session:
+            media_properties = await session.try_get_media_properties_async()
+            
+            title = media_properties.title
+            artist = media_properties.artist
+            return f"'{title}' by {artist}"
+        else:
+            return "No media is currently playing."
+    except:
+        return ""
         
 async def get_playback_status():
     try:
