@@ -10,13 +10,13 @@ from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from ctypes import cast, POINTER
 
 PORT:int = 9187
+SUCCESS:dict = {"success": True}
 HTML:str = "index.html"
 
 app = Flask(__name__)
 
-def read_file(path:str) -> str:
-    with open(path, "r") as f:
-        return f.read()
+def error(msg:str)->str:
+    return {"success": False, "message": msg}
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
@@ -26,7 +26,7 @@ def index():
         json = request.json
         if json != None:
             if "action" not in json:
-                return "error"
+                return error("No action provided!")
             match json["action"]:
                 case "vol-low":
                     for _ in range(3):
@@ -43,9 +43,10 @@ def index():
                 case "track-play":
                     pyautogui.press("playpause")
                 case _:
-                    print("Unsupported action")
-        return {"success": True}
-
+                    return error(f"Unsupported action: '{json['action']}'")
+            return SUCCESS
+        return error("Bad request!")
+    return error(f"Unsupported request method: '{request.method}'")
 
 @app.route('/current-track', methods=['GET'])
 def get_current_track():
