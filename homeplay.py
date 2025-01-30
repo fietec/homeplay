@@ -1,34 +1,94 @@
-from flask import Flask, request, send_file, jsonify
-import pyautogui
-import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import socket
+import json
+import os
 import sys
+
+import pyautogui
 import asyncio
 from winrt.windows.media.control import GlobalSystemMediaTransportControlsSessionManager as MediaManager
 from winrt.windows.media.control import GlobalSystemMediaTransportControlsSessionPlaybackStatus as PlaybackStatus
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from ctypes import cast, POINTER
 
-PORT:int = 9187
-SUCCESS:dict = {"success": True}
-HTML:str = "index.html"
+HTML_FILE:str = "index.html"
 
-app = Flask(__name__)
+class var:
+    def __init__(self, type, data):
+        self._type = type
+        self._data = data
+    
+    def set(self, data):
+        if isinstance(data, self._type):
+            self._data = data
+            
+    def get(self):
+        return self._data
 
-def error(msg:str)->str:
-    return {"success": False, "message": msg}
+def read_file(path:str) -> str:
+    with open(os.path.join(os.getcwd(), path), "r", encoding="utf-8") as f:
+        return f.read()
 
-@app.route("/", methods=['GET', 'POST'])
-def index():
-    if request.method == 'GET':
-        return send_file(HTML)
-    elif request.method == 'POST':
-        json = request.json
-        if json != None:
-            if "action" not in json:
-                return error("No action provided!")
-            try:
-                match json["action"]:
+class HomeplayHandler(BaseHTTPRequestHandler):
+    def _set_html_response(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        
+    def _set_json_response(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        
+    def _success(self):
+        self._set_json_response()
+        self.wfile.write(json.dumps({"success": True}).encode('utf-8'))
+        
+    def _error(self, msg:str):
+        self._set_json_response()
+        self.wfile.write(json.dumps({"success": False, "message": msg}).encode('utf-8'))
+
+    def do_GET(self):
+        match self.path:
+            case "/":
+                content:str = read_file(HTML_FILE)
+                self._set_html_response()
+                self.wfile.write(content.encode('utf-8'))
+            case "/current-track":
+                try:
+                    content:str = json.dumps({
+                        "success": True,
+                        "track": {
+                            "title": asyncio.run(get_current_song())
+                        },
+                        "isPlaying": asyncio.run(get_playback_status()) == PlaybackStatus.PLAYING,
+                        "audio": get_audio_info()
+                    })
+                    self._set_json_response()
+                    self.wfile.write(content.encode('utf-8'))
+                except:
+                    self._error("Failed to collect data")
+            case "/shutdown":
+                running.set(False)
+                print("Received shutdown command")
+                self._success()
+            case _:
+                self._set_html_response()
+                self.wfile.write("This site doesn't exist!".encode('utf-8'))
+                
+
+    def do_POST(self):
+        content_length = int(self.headers['Content-Length'])
+        data = json.loads(self.rfile.read(content_length))
+        if not data:
+            self._error("Invalid json data!")
+            return
+        match self.path:
+            case "/":
+                if "action" not in data:
+                    self._error("No action provided!")
+                    return 
+                match data["action"]:
                     case "vol-low":
                         for _ in range(3):
                             pyautogui.press("volumedown")
@@ -44,30 +104,27 @@ def index():
                     case "track-play":
                         pyautogui.press("playpause")
                     case _:
-                        return error(f"Unsupported action: '{json['action']}'")
-                return SUCCESS
-            except:
-                return error("Internal error")
-        return error("Bad request!")
-    return error(f"Unsupported request method: '{request.method}'")
-
-@app.route('/current-track', methods=['GET'])
-def get_current_track():
-    try:
-        return jsonify({
-            "success": True,
-            "track": {
-                "title": asyncio.run(get_current_song())
-            },
-            "isPlaying": asyncio.run(get_playback_status()) == PlaybackStatus.PLAYING,
-            "audio": get_audio_info()
-        })
-    except:
-        return "{}"
+                        return self._error(f"Unsupported action: '{data['action']}'")
+                self._success()
+                return
+            case _:
+                self._set_json_response()
+                self.wfile.write(json.dumps({"success": False, "message": "Invalid path!"}).encode('utf-8'))
         
-@app.route("/shutdown")
-def shutdown():
-    return SUCCESS
+
+running:var = var(bool, True)
+
+def run(port=9187):
+    server_address = (socket.gethostbyname(socket.gethostname()), port)
+    print(f"Serving at http://{server_address[0]}:{server_address[1]}")
+    httpd = HTTPServer(server_address, HomeplayHandler)
+    try:
+        while running.get():
+            httpd.handle_request()
+    except KeyboardInterrupt:
+        print("Server interrupted")
+    print("Exiting..")
+    httpd.server_close()
     
 async def get_current_song():
     try:
@@ -100,11 +157,11 @@ def get_audio_info():
         interface = devices.Activate(IAudioEndpointVolume._iid_, 1, None)
         volume = cast(interface, POINTER(IAudioEndpointVolume))
         return {"volume": volume.GetMasterVolumeLevelScalar()*100, "isMuted": volume.GetMute()}
-    except:
+    except Exception as e:
         return {"volume": 50, "isMute": False}
 
-if (len(sys.argv) > 1):
-    port:int = int(sys.argv[1])
-else:
-    port:int = PORT
-app.run(socket.gethostbyname(socket.gethostname()), port)
+if __name__ == '__main__':
+    if len(sys.argv) == 2:
+        run(port=int(sys.argv[1]))
+    else:
+        run()

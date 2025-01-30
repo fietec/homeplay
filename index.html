@@ -127,7 +127,7 @@
             </div>
             <div class="volume-text" id="volume-text">50%</div>
         </div>
-        <button class="shutdown-button" id="shutdown">Exit</button>
+        <button class="shutdown-button" id="shutdown">Shutdown</button>
     </div>
     
     <script>
@@ -167,7 +167,8 @@
                       isPlaying = data.isPlaying;
                       isMute = data.audio.isMuted;
                       
-                      let volumeLevel = data.audio.volume; // Assuming volume is from 0 to 100
+                      let volumeLevel = data.audio.volume; 
+                      console.log(volumeLevel);
                       volumeFill.style.width = `${volumeLevel}%`;
                       volumeText.textContent = `${Math.round(volumeLevel)}%`;
 
@@ -188,7 +189,7 @@
                 if (data.success == true){
                     clearInterval(trackInfoIntervalID);
                     clearInterval(contentIntervalID);
-                    document.getElementById('menu-box').innerHTML = "Terminated."
+                    document.getElementById('menu-box').innerHTML = "Exited."
                 }
                 else{
                     alert(data["message"]);
@@ -234,7 +235,7 @@
         });
         
         document.getElementById('shutdown').addEventListener('click', () => {
-            if (confirm("Do you want to terminate this client?")){
+            if (confirm("Do you want to shut down the server?")){
                 shutDown();
             }
         });
