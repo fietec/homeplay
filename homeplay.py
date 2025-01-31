@@ -70,11 +70,11 @@ class HomeplayHandler(BaseHTTPRequestHandler):
                     self._error("Failed to collect data")
             case "/shutdown":
                 running.set(False)
-                print("Received shutdown command")
                 self._success()
+                print("Received shutdown command")
             case _:
                 self._set_html_response()
-                self.wfile.write("This site doesn't exist!".encode('utf-8'))
+                self.wfile.write(f"This site doesn't exist: '{self.path}'!".encode('utf-8'))
                 
 
     def do_POST(self):

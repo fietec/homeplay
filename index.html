@@ -168,7 +168,6 @@
                       isMute = data.audio.isMuted;
                       
                       let volumeLevel = data.audio.volume; 
-                      console.log(volumeLevel);
                       volumeFill.style.width = `${volumeLevel}%`;
                       volumeText.textContent = `${Math.round(volumeLevel)}%`;
 
@@ -189,7 +188,7 @@
                 if (data.success == true){
                     clearInterval(trackInfoIntervalID);
                     clearInterval(contentIntervalID);
-                    document.getElementById('menu-box').innerHTML = "Exited."
+                    document.getElementById('menu-box').innerHTML = "Server closed."
                 }
                 else{
                     alert(data["message"]);
