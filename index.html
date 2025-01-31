@@ -150,11 +150,11 @@
                 method: 'GET'
             }).then(res => res.json()).then(data => {
                 if (data.success) {
-                    trackInfo.textContent = `Now Playing: ${data.track.title}`;
+                    trackInfo.textContent = `Now Playing: '${data.track.title}' by ${data.track.artist}`;
                     playPauseButton.textContent = data.isPlaying ? '⏸️ Pause' : '▶️ Play';
-                    muteButton.textContent = data.audio.isMuted ? '🔊 Un-Mute': '🔇 Mute';
+                    muteButton.textContent = data.volume.isMuted ? '🔊 Un-Mute': '🔇 Mute';
                     
-                    const volumeLevel = data.audio.volume; 
+                    const volumeLevel = data.volume.volume; 
                     volumeFill.style.width = `${volumeLevel}%`;
                     volumeText.textContent = `${Math.round(volumeLevel)}%`;
                 } else {

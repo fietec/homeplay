@@ -58,11 +58,9 @@ class HomeplayHandler(BaseHTTPRequestHandler):
                 try:
                     content:str = json.dumps({
                         "success": True,
-                        "track": {
-                            "title": asyncio.run(get_current_song())
-                        },
+                        "track": asyncio.run(get_current_song()),
                         "isPlaying": asyncio.run(get_playback_status()) == PlaybackStatus.PLAYING,
-                        "audio": get_audio_info()
+                        "volume": get_audio_info()
                     })
                     self._set_json_response()
                     self.wfile.write(content.encode('utf-8'))
@@ -137,11 +135,11 @@ async def get_current_song():
             
             title = media_properties.title
             artist = media_properties.artist
-            return f"'{title}' by {artist}"
+            return {"title": title, "artist": artist}
         else:
-            return "No media is currently playing."
+            return None
     except:
-        return ""
+        return None
         
 async def get_playback_status():
     try:
