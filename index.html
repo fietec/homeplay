@@ -139,8 +139,8 @@
                 },
                 body: JSON.stringify({"action": action})
             }).then(res => res.json()).then(data => {
-                if (data["success"] == false){
-                    alert(data["message"]);
+                if (!data.success){
+                    alert(data.message);
                 }
             });
         }
