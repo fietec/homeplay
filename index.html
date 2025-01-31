@@ -132,7 +132,7 @@
     
     <script>
         function send(action){
-            fetch('', {
+            fetch('/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -149,16 +149,10 @@
             fetch('/current-track', {
                 method: 'GET'
             }).then(res => res.json()).then(data => {
-                const trackInfo = document.getElementById('track-info');
-                const playPauseButton = document.getElementById('play-pause');
-                const volumeFill = document.getElementById('volume-fill');
-                const volumeText = document.getElementById('volume-text');
-                const muteButton = document.getElementById('mute'); 
-                
                 if (data.success) {
                     trackInfo.textContent = `Now Playing: ${data.track.title}`;
                     playPauseButton.textContent = data.isPlaying ? '⏸️ Pause' : '▶️ Play';
-                    muteButton.textContent = !data.audio.isMuted ? '🔇 Mute' : '🔊 Un-Mute';
+                    muteButton.textContent = data.audio.isMuted ? '🔊 Un-Mute': '🔇 Mute';
                     
                     const volumeLevel = data.audio.volume; 
                     volumeFill.style.width = `${volumeLevel}%`;
@@ -182,38 +176,49 @@
                 }
             });
         }
+        
+        const trackInfo = document.getElementById('track-info');
+        const playPauseButton = document.getElementById('play-pause');
+        const prevButton = document.getElementById('prev');
+        const nextButton = document.getElementById('next');
+        const volumeUpButton = document.getElementById('volume-up');
+        const volumeDownButton = document.getElementById('volume-down');
+        const volumeFill = document.getElementById('volume-fill');
+        const volumeText = document.getElementById('volume-text');
+        const muteButton = document.getElementById('mute');
+        const shutdownButton = document.getElementById('shutdown');
 
-        document.getElementById('play-pause').addEventListener('click', () => {
+        playPauseButton.addEventListener('click', () => {
             send('track-play');
             fetchTrackInfo();
         });
 
-        document.getElementById('prev').addEventListener('click', () => {
+        prevButton.addEventListener('click', () => {
             send('track-prev');
             fetchTrackInfo();
         });
 
-        document.getElementById('next').addEventListener('click', () => {
+        nextButton.addEventListener('click', () => {
             send('track-next');
             fetchTrackInfo();
         });
 
-        document.getElementById('mute').addEventListener('click', () => {
+        muteButton.addEventListener('click', () => {
             send('vol-mute');
             fetchTrackInfo();
         });
 
-        document.getElementById('volume-up').addEventListener('click', () => {
+        volumeUpButton.addEventListener('click', () => {
             send('vol-high');
             fetchTrackInfo();
         });
 
-        document.getElementById('volume-down').addEventListener('click', () => {
+        volumeDownButton.addEventListener('click', () => {
             send('vol-low');
             fetchTrackInfo();
         });
         
-        document.getElementById('shutdown').addEventListener('click', () => {
+        shutdownButton.addEventListener('click', () => {
             if (confirm("Do you want to shut down the server?")){
                 shutDown();
             }

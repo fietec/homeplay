@@ -123,6 +123,8 @@ def run(port=9187):
             httpd.handle_request()
     except KeyboardInterrupt:
         print("Server interrupted")
+    except Exception as e:
+        print(f"An exception occured: {e}")
     print("Exiting..")
     httpd.server_close()
     
