@@ -8,7 +8,7 @@ To install the required packages, navigate to the root directory of `homeplay` a
 pip install -r requirements.txt
 ```
 
-After that, simply run:
+After that, simply run:
 ```terminal
 python3 homeplay.py [<PORT>]
 ```
