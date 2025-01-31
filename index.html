@@ -138,56 +138,43 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({"action": action})
-            }).then(res => res.json())
-              .then(res => {
-                  if (res["success"] == false){
-                      alert(res["message"]);
-                  }
-                  else{
-                    setTimeout(fetchTrackInfo, 200);
-                  }
-              });
+            }).then(res => res.json()).then(data => {
+                if (data["success"] == false){
+                    alert(data["message"]);
+                }
+            });
         }
 
         function fetchTrackInfo() {
             fetch('/current-track', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
+                method: 'GET'
+            }).then(res => res.json()).then(data => {
+                const trackInfo = document.getElementById('track-info');
+                const playPauseButton = document.getElementById('play-pause');
+                const volumeFill = document.getElementById('volume-fill');
+                const volumeText = document.getElementById('volume-text');
+                const muteButton = document.getElementById('mute'); 
+                
+                if (data.success) {
+                    trackInfo.textContent = `Now Playing: ${data.track.title}`;
+                    playPauseButton.textContent = data.isPlaying ? '⏸️ Pause' : '▶️ Play';
+                    muteButton.textContent = !data.audio.isMuted ? '🔇 Mute' : '🔊 Un-Mute';
+                    
+                    const volumeLevel = data.audio.volume; 
+                    volumeFill.style.width = `${volumeLevel}%`;
+                    volumeText.textContent = `${Math.round(volumeLevel)}%`;
+                } else {
+                    trackInfo.textContent = 'Error loading track info';
                 }
-            }).then(res => res.json())
-              .then(data => {
-                  const trackInfo = document.getElementById('track-info');
-                  const playPauseButton = document.getElementById('play-pause');
-                  const volumeFill = document.getElementById('volume-fill');
-                  const volumeText = document.getElementById('volume-text');
-
-                  if (data.success) {
-                      trackInfo.textContent = `Now Playing: ${data.track.title}`;
-                      isPlaying = data.isPlaying;
-                      isMute = data.audio.isMuted;
-                      
-                      let volumeLevel = data.audio.volume; 
-                      volumeFill.style.width = `${volumeLevel}%`;
-                      volumeText.textContent = `${Math.round(volumeLevel)}%`;
-
-                      updateContent();
-                  } else {
-                      trackInfo.textContent = 'Error loading track info';
-                  }
-              });
+            });
         }
         
         function shutDown(){
             fetch('/shutdown', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                method: 'GET'
             }).then(res => res.json()).then(data => {
                 if (data.success == true){
                     clearInterval(trackInfoIntervalID);
-                    clearInterval(contentIntervalID);
                     document.getElementById('menu-box').innerHTML = "Server closed."
                 }
                 else{
@@ -195,42 +182,35 @@
                 }
             });
         }
-        
-        function updateContent(){
-            document.getElementById('play-pause').textContent = isPlaying ? '⏸️ Pause' : '▶️ Play';
-            document.getElementById('mute').textContent = !isMute ? '🔇 Mute' : '🔊 Un-Mute';
-        }
 
-        const playPauseButton = document.getElementById('play-pause');
-        let isPlaying = false;
-        let isMute = false;
-
-        playPauseButton.addEventListener('click', () => {
-            isPlaying = !isPlaying;
-            updateContent();
+        document.getElementById('play-pause').addEventListener('click', () => {
             send('track-play');
+            fetchTrackInfo();
         });
 
         document.getElementById('prev').addEventListener('click', () => {
             send('track-prev');
+            fetchTrackInfo();
         });
 
         document.getElementById('next').addEventListener('click', () => {
             send('track-next');
+            fetchTrackInfo();
         });
 
         document.getElementById('mute').addEventListener('click', () => {
-            isMute = !isMute;
-            updateContent();
             send('vol-mute');
+            fetchTrackInfo();
         });
 
         document.getElementById('volume-up').addEventListener('click', () => {
             send('vol-high');
+            fetchTrackInfo();
         });
 
         document.getElementById('volume-down').addEventListener('click', () => {
             send('vol-low');
+            fetchTrackInfo();
         });
         
         document.getElementById('shutdown').addEventListener('click', () => {
@@ -240,10 +220,8 @@
         });
 
         fetchTrackInfo();
-        updateContent();
         
         const trackInfoIntervalID = setInterval(fetchTrackInfo, 2000);
-        const contentIntervalID = setInterval(updateContent, 500);
     </script>
 </body>
 </html>
