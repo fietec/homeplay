@@ -13,21 +13,21 @@ from ctypes import cast, POINTER
 
 HTML_FILE:str = "index.html"
 
+def read_file(path:str) -> str:
+    with open(os.path.join(os.getcwd(), path), "r", encoding="utf-8") as f:
+        return f.read()
+
 class var:
     def __init__(self, type, data):
         self._type = type
         self._data = data
-    
+        
     def set(self, data):
         if isinstance(data, self._type):
             self._data = data
             
     def get(self):
         return self._data
-
-def read_file(path:str) -> str:
-    with open(os.path.join(os.getcwd(), path), "r", encoding="utf-8") as f:
-        return f.read()
 
 class HomeplayHandler(BaseHTTPRequestHandler):
     def _set_html_response(self):
@@ -117,7 +117,7 @@ def run(port=9187):
     print(f"Serving at http://{server_address[0]}:{server_address[1]}")
     httpd = HTTPServer(server_address, HomeplayHandler)
     try:
-        while running.get():
+        while running.get() == True:
             httpd.handle_request()
     except KeyboardInterrupt:
         print("Server interrupted")
